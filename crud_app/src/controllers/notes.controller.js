@@ -34,4 +34,24 @@ const addNote = asyncHandler( async (req, res) => {
     });
 })
 
-export {getNotes, addNote}
+//  get-note-by-id
+const getNoteById = asyncHandler( async (req, res) => {
+    const { id } = req.params;
+
+    const noteById = await prisma.notes.findUnique({
+        where:{
+            id: parseInt(id)
+        }
+    });
+
+    if (!noteById) {
+        return res.status(404).json({message: "Note not found"})
+    }
+
+    res.status(200).json({
+        message: "Note fetched successfully",
+        data: noteById
+    });
+});
+
+export {getNotes, addNote, getNoteById}
