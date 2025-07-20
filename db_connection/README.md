@@ -6,6 +6,7 @@ A comprehensive guide to setting up a Node.js Express backend with PostgreSQL da
 
 1. Initialize Your Project:
     Create a new directory for your project
+<<<<<<< HEAD
         mkdir my-express-app
         cd my-express-app
 
@@ -27,6 +28,39 @@ A comprehensive guide to setting up a Node.js Express backend with PostgreSQL da
 6. Define Your Data Model:
     Edit prisma/schema.prisma to define your database schema:
 
+=======
+```bash    
+        mkdir my-express-app
+        cd my-express-app
+```        
+
+2. Initialize npm project:
+```bash
+    npm init
+```
+
+3. Install Dependencies:
+```bash
+    npm i express cookie-parser cors dotenv pg @prisma/client
+    npm i -D nodemon prisma
+```    
+
+4. Initialize Prisma:
+```bash
+    npx prisma init
+```
+
+5. Configure Environment Variables:
+```bash
+    DATABASE_URL="postgresql://username:password@localhost:5432/dbname?schema=public"
+    PORT=PORT_NO
+    CORS_ORIGIN=*        
+```
+
+6. Define Your Data Model:
+    Edit prisma/schema.prisma to define your database schema:
+```bash
+>>>>>>> 2c91362d1629df9fa9bed7a3e19a60a9e2ac5277
     generator client {
         provider = "prisma-client-js"
         // output   = "../src/generated/prisma"
@@ -46,6 +80,7 @@ A comprehensive guide to setting up a Node.js Express backend with PostgreSQL da
         createdAt DateTime @default(now())
         updatedAt DateTime @updatedAt
     }
+<<<<<<< HEAD
 
 7. Push Schema to Database:
     npx prisma db push
@@ -71,3 +106,29 @@ npx prisma generate
 npm run dev
 these are the steps to setup the node express backend with postgredb using prisma. 
 Can you give me a comprehensive readme file regarding to this to push in git  
+=======
+```
+
+7. Push Schema to Database:
+```bash
+    npx prisma db push
+```
+
+8. Generate Prisma Client:
+```bash
+    npx prisma generate 
+```
+
+9. Create Your Express Server and update the script in package.json:
+```bash
+    "scripts": {
+        "dev": "nodemon src/index.js",
+        "prisma": "npx prisma",
+    }
+```
+
+10. Run the Application:
+```bash
+    npm run dev
+```
+>>>>>>> 2c91362d1629df9fa9bed7a3e19a60a9e2ac5277
