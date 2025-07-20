@@ -83,4 +83,24 @@ const updateNote = asyncHandler( async (req, res) => {
        });
 });
 
-export {getNotes, addNote, getNoteById, updateNote}
+// delete-note
+const deleteNote =  asyncHandler( async (req, res) => {
+   const { id } = req.params;
+
+    const existingNote = await prisma.notes.findUnique({
+            where: { id: parseInt(id) }
+    });
+    
+    if (!existingNote) {
+            return res.status(404).json({ message: "Note not found" });
+    }
+
+    const deleteNote = await prisma.notes.delete({
+            where: { id: parseInt(id) }
+    });
+
+    res.status(200)
+       .json({ message: "Note Deleted Successfully"})
+});
+
+export {getNotes, addNote, getNoteById, updateNote, deleteNote}
