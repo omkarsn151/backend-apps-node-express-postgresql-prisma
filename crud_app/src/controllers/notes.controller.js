@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { parse } from "dotenv";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +11,7 @@ const getNotes = asyncHandler( async (req, res) => {
         message: "OK",
         data: notes
     })
-})
+});
 
 // add-note
 const addNote = asyncHandler( async (req, res) => {
@@ -32,7 +33,7 @@ const addNote = asyncHandler( async (req, res) => {
         message: "New note added Successfully!",
         data: newNote
     });
-})
+});
 
 //  get-note-by-id
 const getNoteById = asyncHandler( async (req, res) => {
@@ -54,4 +55,32 @@ const getNoteById = asyncHandler( async (req, res) => {
     });
 });
 
-export {getNotes, addNote, getNoteById}
+// update-note
+const updateNote = asyncHandler( async (req, res) => {
+    const { id } = req.params;
+    const { title, description } = req.body;
+
+    const existingNote = await prisma.notes.findUnique({
+        where: { id: parseInt(id) }
+    });
+
+    if (!existingNote) {
+        return res.status(404).json({ message: "Note not found" });
+    }
+
+    const updateNote = await prisma.notes.update({
+        where: { id: parseInt(id) },
+        data: {
+            title: title || existingNote.title,
+            description: description || existingNote.description,
+        }
+    });
+
+    res.status(200)
+       .json({
+        message: "Note updated successfully",
+        data: updateNote,
+       });
+});
+
+export {getNotes, addNote, getNoteById, updateNote}
