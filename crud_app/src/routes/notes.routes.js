@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addNote, deleteNote, getNoteById, getNotes, updateNote } from "../controllers/notes.controller.js";
+import { addNote, deleteNote, deleteSelectedNotes, getNoteById, getNotes, updateNote } from "../controllers/notes.controller.js";
 
 const router = Router()
 
@@ -17,5 +17,8 @@ router.route('/update-note/:id').patch(updateNote)
 
 // delete-note
 router.route('/delete-note/:id').delete(deleteNote)
+
+// delete-seleted-notes
+router.route('/delete-selected-notes').delete(deleteSelectedNotes)
 
 export default router

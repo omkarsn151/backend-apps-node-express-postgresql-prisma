@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { parse } from "dotenv";
 
@@ -103,4 +103,41 @@ const deleteNote =  asyncHandler( async (req, res) => {
        .json({ message: "Note Deleted Successfully"})
 });
 
-export {getNotes, addNote, getNoteById, updateNote, deleteNote}
+const deleteSelectedNotes = asyncHandler( async (req, res) => {
+    const { selectedIds } = req.body;
+
+    if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
+        return res.status(400).json({
+            message: "Please provide an array of IDs to delete"
+        });
+    }
+
+    const validIds = selectedIds
+        .map(id => parseInt(id))
+        .filter(id => !isNaN(id));
+
+    if (validIds.length === 0) {
+        return res.status(400).json({
+            message: "All provided IDs are invalid"
+        });
+    }
+
+    const deleteResult = await prisma.notes.deleteMany({
+        where: {
+            id: { in: validIds }
+        }
+    });
+
+    if (deleteResult.count === 0) {
+        return res.status(404).json({
+            message: "No matching notes found to delete"
+        });
+    }
+
+    return res.status(200).json({
+        message: `Successfully deleted ${deleteResult.count} of ${validIds.length} selected notes`
+    });
+
+});
+
+export {getNotes, addNote, getNoteById, updateNote, deleteNote, deleteSelectedNotes}
