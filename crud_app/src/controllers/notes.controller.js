@@ -1,6 +1,5 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { parse } from "dotenv";
 
 const prisma = new PrismaClient();
 
@@ -140,4 +139,20 @@ const deleteSelectedNotes = asyncHandler( async (req, res) => {
 
 });
 
-export {getNotes, addNote, getNoteById, updateNote, deleteNote, deleteSelectedNotes}
+const deleteAllNotes = asyncHandler(async (req, res) => {
+    const totalNotes = await prisma.notes.count();
+
+    if (totalNotes === 0) {
+        return res.status(404).json({
+            message: "There are no notes to delete.",
+        });
+    }
+
+    await prisma.notes.deleteMany({});
+
+    res.status(200).json({
+        message: `All notes have been deleted successfully(Count = ${totalNotes}).`,
+    });
+});
+
+export { getNotes, addNote, getNoteById, updateNote, deleteNote, deleteSelectedNotes, deleteAllNotes }
