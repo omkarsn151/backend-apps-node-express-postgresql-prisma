@@ -102,6 +102,7 @@ const deleteNote =  asyncHandler( async (req, res) => {
        .json({ message: "Note Deleted Successfully"})
 });
 
+// delete-selected-notes
 const deleteSelectedNotes = asyncHandler( async (req, res) => {
     const { selectedIds } = req.body;
 
@@ -139,6 +140,7 @@ const deleteSelectedNotes = asyncHandler( async (req, res) => {
 
 });
 
+// delete-all-notes
 const deleteAllNotes = asyncHandler(async (req, res) => {
     const totalNotes = await prisma.notes.count();
 
