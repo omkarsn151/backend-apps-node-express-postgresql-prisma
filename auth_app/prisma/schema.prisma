@@ -17,11 +17,11 @@ datasource db {
 model User {
     id        Int      @id @default(autoincrement())
     username  String   @unique
+    fullName  String
     phone     String   @unique
     email     String   @unique
     password  String
     refreshToken        String?
-    refreshTokenExpiry  DateTime?
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
