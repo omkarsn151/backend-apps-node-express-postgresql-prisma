@@ -3,19 +3,20 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import bcrypt from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
-const getAllUsers =  asyncHandler( async (req, res) => {
+const getAllUsers = asyncHandler(async (req, res) => {
     const allUsers = await prisma.user.findMany();
     res.status(200).json({
-        message: "OK",
+        message: "User List Fetched Successfully",
         data: allUsers
     });
 });
 
-const regiterUser = asyncHandler( async (req, res) => {
-    const { username, fullName, phone, email, password} = req.body
+const regiterUser = asyncHandler(async (req, res) => {
+    const { username, fullName, phone, email, password } = req.body
 
     if ([username, fullName, phone, email, password].some((field) => !field?.trim())) {
         throw new ApiError(400, "All fields are required");
@@ -27,18 +28,17 @@ const regiterUser = asyncHandler( async (req, res) => {
     if (existingEmail) {
         return res.status(409).json({
             message: "Email number already exists"
-        })  
-        throw new ApiError(409, "Email already exists");
+        })
     }
 
     const existingPhone = await prisma.user.findUnique({
         where: { phone }
     });
-    if ( existingPhone ) {
+    if (existingPhone) {
         // throw new ApiError(409,"Phone numner already exists");   
         return res.status(409).json({
             message: "Phone number already exists"
-        })     
+        })
     }
 
     const exixtingUsername = await prisma.user.findUnique({
@@ -48,30 +48,30 @@ const regiterUser = asyncHandler( async (req, res) => {
         throw new ApiError(409, "Username already exists");
     }
 
-//   const existing = await prisma.user.findFirst({
-//     where: {
-//       OR: [
-//         { email },
-//         { phone },
-//         { username },
-//       ]
-//     }
-//   });
+    //   const existing = await prisma.user.findFirst({
+    //     where: {
+    //       OR: [
+    //         { email },
+    //         { phone },
+    //         { username },
+    //       ]
+    //     }
+    //   });
 
-//   if (existing) {
-//     const conflictField = existing.email === email
-//       ? "Email"
-//       : existing.phone === phone
-//       ? "Phone number"
-//       : "Username";
+    //   if (existing) {
+    //     const conflictField = existing.email === email
+    //       ? "Email"
+    //       : existing.phone === phone
+    //       ? "Phone number"
+    //       : "Username";
 
-//     throw new ApiError(409, `${conflictField} already exists`);
-//   }
+    //     throw new ApiError(409, `${conflictField} already exists`);
+    //   }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
 
-    const newUser =  await prisma.user.create({
+    const newUser = await prisma.user.create({
         data: {
             username,
             fullName,
@@ -110,14 +110,14 @@ const regiterUser = asyncHandler( async (req, res) => {
 
 });
 
-const loginUser = asyncHandler( async (req, res) => {
-    const { username, phone, email, password} = req.body;
+const loginUser = asyncHandler(async (req, res) => {
+    const { username, phone, email, password } = req.body;
 
     if (!password || (!username && !phone && !email)) {
         throw new ApiError(400, "Login credentials are required");
     }
 
-        const user = await prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
         where: {
             OR: [
                 { username },
@@ -154,27 +154,91 @@ const loginUser = asyncHandler( async (req, res) => {
         data: { refreshToken },
     });
 
-    res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60,
-    });
+    // res.cookie("accessToken", accessToken, {
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === "production",
+    //     maxAge: 1000 * 60 * 60,
+    // });
+
+    // res.cookie("refreshToken", refreshToken, {
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === "production",
+    //     maxAge: 1000 * 60 * 60 * 24 * 7,
+    // });
 
     res.status(200)
         .json({
-        message: "Login successful",
-        data: {
-            id: user.id,
-            username: user.username,
-            fullName: user.fullName,
-            phone: user.phone,
-            email: user.email,
-        },
-        accessToken,
-        refreshToken,
-    });
+            message: "Login successful",
+            data: {
+                id: user.id,
+                username: user.username,
+                fullName: user.fullName,
+                phone: user.phone,
+                email: user.email,
+            },
+            accessToken,
+            refreshToken,
+        });
 });
 
+
+
+// REFRESH TOKENS
+const generateRefreshAndAccessToken = asyncHandler(async (req, res) => {
+    //   const refreshToken =
+    //     req.cookies?.refreshToken || req.body.refreshToken;
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        throw new ApiError(401, "Refresh token missing");
+    }
+
+    try {
+        // Verify refresh token
+        const decoded = jwt.verify(
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded?.id },
+        });
+
+        if (!user || user.refreshToken !== refreshToken) {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+
+        // Generate new tokens
+        const accessToken = generateAccessToken(user);
+        const newRefreshToken = generateRefreshToken(user);
+
+        // Update stored refresh token
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { refreshToken: newRefreshToken },
+        });
+
+        // Optionally set cookie for access + refresh
+        // res.cookie("accessToken", accessToken, {
+        //   httpOnly: true,
+        //   secure: process.env.NODE_ENV === "production",
+        //   maxAge: 1000 * 60 * 60, // 1 hour
+        // });
+        // res.cookie("refreshToken", newRefreshToken, {
+        //   httpOnly: true,
+        //   secure: process.env.NODE_ENV === "production",
+        //   maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        // });
+
+        res.status(200).json({
+            message: "Tokens refreshed successfully",
+            accessToken,
+            refreshToken: newRefreshToken,
+        });
+    } catch (error) {
+        throw new ApiError(401, "Invalid or expired refresh token");
+    }
+});
 
 // login with email password only
 // const loginUser = asyncHandler(async (req, res) => {
@@ -244,4 +308,4 @@ const loginUser = asyncHandler( async (req, res) => {
 // });
 
 
-export { getAllUsers, regiterUser, loginUser }
+export { getAllUsers, regiterUser, loginUser, generateRefreshAndAccessToken }
