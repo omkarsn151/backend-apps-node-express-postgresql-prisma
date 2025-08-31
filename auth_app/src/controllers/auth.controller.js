@@ -7,14 +7,6 @@ import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
-const getAllUsers = asyncHandler(async (req, res) => {
-    const allUsers = await prisma.user.findMany();
-    res.status(200).json({
-        message: "User List Fetched Successfully",
-        data: allUsers
-    });
-});
-
 const regiterUser = asyncHandler(async (req, res) => {
     const { username, fullName, phone, email, password } = req.body
 
@@ -181,8 +173,6 @@ const loginUser = asyncHandler(async (req, res) => {
         });
 });
 
-
-
 // REFRESH TOKENS
 const generateRefreshAndAccessToken = asyncHandler(async (req, res) => {
     //   const refreshToken =
@@ -308,4 +298,4 @@ const generateRefreshAndAccessToken = asyncHandler(async (req, res) => {
 // });
 
 
-export { getAllUsers, regiterUser, loginUser, generateRefreshAndAccessToken }
+export { regiterUser, loginUser, generateRefreshAndAccessToken }

@@ -4,6 +4,42 @@ import { ApiError } from "../utils/ApiError.js";
 
 const prisma = new PrismaClient();
 
+// get-all-users
+const getAllUsers = asyncHandler( async (req, res) => {
+    const allUsers = await prisma.user.findMany();
+    res.status(200).json({
+        message: "User List Fetched Successfully",
+        data: allUsers
+    });
+});
+
+// get-user-profile-by-id
+const getUserProfileById = asyncHandler( async (req, res) => {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+        where: { id: Number(id) },
+        select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            createdAt: true,
+            updatedAt: true,
+        }
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    res.status(200).json({
+        message: "User Profile fetched successfully",
+        data: user
+    });
+});
+
 // get-user-profile
 const getUserProfile  = asyncHandler( async (req, res) => {
     const userId =  req.user.id;
@@ -145,4 +181,4 @@ const changePassword = asyncHandler( async (req, res) => {
     });
 });
 
-export { getUserProfile, updateUserProfile, changePassword }
+export { getAllUsers, getUserProfile, updateUserProfile, changePassword, getUserProfileById }

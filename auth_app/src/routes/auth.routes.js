@@ -1,11 +1,9 @@
 import { Router } from "express";
-import { getAllUsers, loginUser, regiterUser, generateRefreshAndAccessToken } from "../controllers/auth.controller.js";
+import { loginUser, regiterUser, generateRefreshAndAccessToken } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router()
 
-// get-all-users
-router.route('/get-users').get(verifyJWT, getAllUsers)
 
 // register-user
 router.route('/register').post(regiterUser)
