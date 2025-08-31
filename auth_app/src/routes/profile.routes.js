@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllUsers, getUserProfileById, getUserProfile, updateUserProfile, changePassword } from "../controllers/profile.controlller.js";
+import { getAllUsers, getUserProfileById, getUserProfile, updateUserProfile, changePassword, deleteAccount } from "../controllers/profile.controlller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -17,5 +17,9 @@ router.route('/user-profile/:id').get(verifyJWT, getUserProfileById);
 router.route('/update-profile').patch(verifyJWT, updateUserProfile);
 
 // change-password
-router.route('/change-password').post(verifyJWT, changePassword)
+router.route('/change-password').post(verifyJWT, changePassword);
+
+// delete-account
+router.route('/delete-account').delete(verifyJWT, deleteAccount);
+
 export default router

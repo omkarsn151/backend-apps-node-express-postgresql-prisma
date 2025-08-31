@@ -1,11 +1,12 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 // get-all-users
-const getAllUsers = asyncHandler( async (req, res) => {
+const getAllUsers = asyncHandler(async (req, res) => {
     const allUsers = await prisma.user.findMany();
     res.status(200).json({
         message: "User List Fetched Successfully",
@@ -14,7 +15,7 @@ const getAllUsers = asyncHandler( async (req, res) => {
 });
 
 // get-user-profile-by-id
-const getUserProfileById = asyncHandler( async (req, res) => {
+const getUserProfileById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     const user = await prisma.user.findUnique({
@@ -41,8 +42,8 @@ const getUserProfileById = asyncHandler( async (req, res) => {
 });
 
 // get-user-profile
-const getUserProfile  = asyncHandler( async (req, res) => {
-    const userId =  req.user.id;
+const getUserProfile = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
 
     const userProfile = await prisma.user.findUnique({
         where: { id: userId },
@@ -53,7 +54,7 @@ const getUserProfile  = asyncHandler( async (req, res) => {
             phone: true,
             email: true,
             createdAt: true,
-            updatedAt: true,   
+            updatedAt: true,
         }
     });
 
@@ -68,15 +69,15 @@ const getUserProfile  = asyncHandler( async (req, res) => {
 });
 
 // update-user-profile
-const updateUserProfile = asyncHandler( async (req, res) => {
-    const userId =  req.user.id;
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
     const { username, fullName, phone, email } = req.body;
 
     if (username) {
         const existingUsername = await prisma.user.findFirst({
             where: {
                 username,
-                id: { not: userId }, 
+                id: { not: userId },
             },
         });
         if (existingUsername) {
@@ -88,7 +89,7 @@ const updateUserProfile = asyncHandler( async (req, res) => {
         const existingEmail = await prisma.user.findFirst({
             where: {
                 email,
-                id: { not: userId }, 
+                id: { not: userId },
             },
         });
         if (existingEmail) {
@@ -100,7 +101,7 @@ const updateUserProfile = asyncHandler( async (req, res) => {
         const existingPhone = await prisma.user.findFirst({
             where: {
                 phone,
-                id: { not: userId }, 
+                id: { not: userId },
             },
         });
         if (existingPhone) {
@@ -136,11 +137,11 @@ const updateUserProfile = asyncHandler( async (req, res) => {
 });
 
 // change-password
-const changePassword = asyncHandler( async (req, res) => {
+const changePassword = asyncHandler(async (req, res) => {
     const userId = req.user.id;
     const { currentPassword, newPassword } = req.body;
 
-    if(!currentPassword || !newPassword){
+    if (!currentPassword || !newPassword) {
         throw new ApiError(400, "Current password and new password are required");
     }
 
@@ -158,13 +159,13 @@ const changePassword = asyncHandler( async (req, res) => {
 
     const bcrypt = await import("bcrypt");
     const isPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
-    
+
     if (!isPasswordCorrect) {
         throw new ApiError(401, "Current password is incorrect");
     }
 
-    if (await bcrypt.compare(newPassword, user.password)){
-        throw new ApiError(401,"New Password cannot be same as old one");
+    if (await bcrypt.compare(newPassword, user.password)) {
+        throw new ApiError(401, "New Password cannot be same as old one");
     }
 
     // Hash new password
@@ -181,4 +182,35 @@ const changePassword = asyncHandler( async (req, res) => {
     });
 });
 
-export { getAllUsers, getUserProfile, updateUserProfile, changePassword, getUserProfileById }
+const deleteAccount = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const { password } = req.body;
+
+    if (!password) {
+        throw new ApiError(400, "Password is required to delete the account")
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, password: true },
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+        throw new ApiError(401, "Invalid password");
+    }
+
+    await prisma.user.delete({
+        where: { id: userId },
+    });
+
+    res.status(200).json({
+        message: "Account deleted successfully",
+    });
+});
+
+export { getAllUsers, getUserProfile, getUserProfileById, updateUserProfile, changePassword, deleteAccount }
